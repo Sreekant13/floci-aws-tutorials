@@ -5,7 +5,7 @@ title: Floci AWS Tutorials
 Hands-on AWS tutorials that run entirely on your laptop.
 **No AWS account, no credit card, no credentials, no bill.**
 
-Each tutorial uses [Floci](https://floci.io/) — an MIT-licensed local cloud
+Each tutorial uses [Floci](https://floci.io/) - an MIT-licensed local cloud
 emulator that speaks the real AWS wire protocol on `localhost:4566`. You write
 ordinary `aws` CLI commands and ordinary boto3 / AWS SDK v3 code. The only
 difference from real AWS is a single endpoint override, and every tutorial
@@ -31,7 +31,7 @@ If that listed your bucket, you are ready.
 
 | # | Topic | Services | Time |
 |---|---|---|---|
-| [00](tutorials/00-setup/) | Setup | — | 20 min |
+| [00](tutorials/00-setup/) | Setup | - | 20 min |
 | [01](tutorials/01-s3/) | Object storage | S3 | 50 min |
 | [02](tutorials/02-dynamodb/) | Key-value data | DynamoDB | 60 min |
 | 03 | Serverless functions | Lambda | _in progress_ |
@@ -49,7 +49,7 @@ barrier to actually *practising* cloud work rather than reading about it.
 
 Floci removes it. It starts in roughly 24ms, idles at about 13 MiB, accepts any
 credentials, and covers 68 AWS services. Lambda, RDS, EC2, ECS and OpenSearch
-are not emulated at all — Floci launches real engines in Docker — so those
+are not emulated at all - Floci launches real engines in Docker - so those
 behave very close to production.
 
 The trade is fidelity. Emulation is not the real thing, and pretending

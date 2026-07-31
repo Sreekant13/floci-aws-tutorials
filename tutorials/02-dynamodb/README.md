@@ -1,16 +1,16 @@
 ---
-title: "02 — DynamoDB: key-value at scale"
+title: "02 - DynamoDB: key-value at scale"
 permalink: /tutorials/02-dynamodb/
 ---
 
-# 02 — DynamoDB: key-value at scale
+# 02 - DynamoDB: key-value at scale
 
 **Time: 60 minutes.** Assumes [`00-setup`](../00-setup/) is done.
 
-## What you'll build
+## What you will build
 
 A single table holding both users and their orders, queried five different
-ways — including by a field that is not part of the primary key, which is what
+ways - including by a field that is not part of the primary key, which is what
 a Global Secondary Index is for.
 
 ```mermaid
@@ -34,7 +34,7 @@ know your access patterns before you design the table.** Get the key wrong and
 some queries become impossible without a full table scan.
 
 That constraint is the whole lesson. A relational database lets you defer that
-decision; DynamoDB does not. This tutorial walks the design forward — pick keys,
+decision; DynamoDB does not. This tutorial walks the design forward - pick keys,
 discover a query you cannot serve, add a GSI to serve it.
 
 ## Prerequisites
@@ -61,7 +61,7 @@ what makes range queries possible.
 
 **Only key attributes are declared.** `--attribute-definitions` lists `pk` and
 `sk` and nothing else, even though the items below will carry `email`, `age` and
-`total`. DynamoDB is schemaless except for keys — you declare an attribute only
+`total`. DynamoDB is schemaless except for keys - you declare an attribute only
 if an index uses it. This surprises people coming from SQL.
 
 Check it went `ACTIVE`:
@@ -86,7 +86,7 @@ aws dynamodb put-item --table-name app-data --item '{"pk":{"S":"USER#1"},"sk":{"
 aws dynamodb put-item --table-name app-data --item '{"pk":{"S":"USER#2"},"sk":{"S":"PROFILE"},"email":{"S":"grace@example.com"},"age":{"N":"45"}}'
 ```
 
-The `{"S": ...}` and `{"N": ...}` wrappers are DynamoDB's type descriptors —
+The `{"S": ...}` and `{"N": ...}` wrappers are DynamoDB's type descriptors -
 `S` for string, `N` for number (sent as a string, to avoid float precision
 loss). The SDKs hide this; the CLI does not.
 
@@ -101,7 +101,7 @@ call is precisely what this layout buys.
 aws dynamodb get-item --table-name app-data --key '{"pk":{"S":"USER#1"},"sk":{"S":"PROFILE"}}'
 ```
 
-`get-item` needs the **complete** primary key — both parts. If you only know the
+`get-item` needs the **complete** primary key - both parts. If you only know the
 partition key, you need `query` instead.
 
 ## 4. Query a partition
@@ -114,7 +114,7 @@ aws dynamodb query --table-name app-data \
 
 Two items: the profile and the order. One request, one partition, no scan.
 
-The `:p` placeholder is required — DynamoDB has no string interpolation, and
+The `:p` placeholder is required - DynamoDB has no string interpolation, and
 values always travel separately from the expression. Same idea as a prepared
 statement.
 
@@ -127,7 +127,7 @@ aws dynamodb query --table-name app-data \
 ```
 
 Only the order comes back. This is why the `ORDER#1` / `PROFILE` prefix
-convention exists — the sort key is doing the work of a WHERE clause, and
+convention exists - the sort key is doing the work of a WHERE clause, and
 `begins_with` is cheap because items are physically stored in sort-key order.
 
 ## 6. The query you cannot serve
@@ -160,7 +160,7 @@ aws dynamodb update-table --table-name app-data \
   --global-secondary-index-updates '[{"Create":{"IndexName":"email-index","KeySchema":[{"AttributeName":"email","KeyType":"HASH"}],"Projection":{"ProjectionType":"ALL"}}}]'
 ```
 
-Note `email` must now be declared in `--attribute-definitions` — it became a key
+Note `email` must now be declared in `--attribute-definitions` - it became a key
 attribute the moment an index used it.
 
 Now the same question is a targeted query:
@@ -185,7 +185,7 @@ aws dynamodb put-item --table-name app-data \
   --condition-expression "attribute_not_exists(pk)"
 ```
 
-This fails with `ConditionalCheckFailedException`, and it should — that item
+This fails with `ConditionalCheckFailedException`, and it should - that item
 exists, and without the condition `put-item` would have silently replaced it,
 losing `age` along the way.
 
@@ -204,7 +204,7 @@ aws dynamodb update-item --table-name app-data \
 ```
 
 The increment happens server-side. Two concurrent callers both get their
-increment applied — no read-modify-write race, because you never read the value
+increment applied - no read-modify-write race, because you never read the value
 into your application at all.
 
 ## 10. The same thing in code
@@ -240,7 +240,7 @@ Verified by hand against Floci 0.2.0 on 2026-07-31. See
 [`docs/COVERAGE.md`](../../docs/COVERAGE.md).
 
 - **GSI writes appear immediately.** In real AWS a GSI is **eventually
-  consistent** — an item written to the base table can take a moment to appear
+  consistent** - an item written to the base table can take a moment to appear
   in the index, and you cannot request a strongly consistent read from a GSI at
   all. Under Floci the index was queryable straight away in every test. Code
   that works here can fail intermittently in production if it writes an item and
@@ -251,7 +251,7 @@ Verified by hand against Floci 0.2.0 on 2026-07-31. See
   everything is `ACTIVE` immediately, so a missing wait-loop never shows up.
 - **No capacity model.** `PAY_PER_REQUEST` is accepted and means nothing. There
   is no throttling, no `ProvisionedThroughputExceededException`, no hot-partition
-  penalty. A key design that would melt in production performs fine here — so
+  penalty. A key design that would melt in production performs fine here - so
   this tutorial cannot teach you partition-key selection by experiment.
 - **Item size limits are not enforced** in the same way. Real DynamoDB rejects
   items over 400 KB.
@@ -264,7 +264,7 @@ Verified by hand against Floci 0.2.0 on 2026-07-31. See
 2. Combine with tutorial 01: write a script that exports every item to a JSON
    file in S3, then reimports it into a fresh table. What happens to the type
    descriptors on the round trip?
-3. The `email-index` GSI has a flaw — two users could share an email, and a GSI
+3. The `email-index` GSI has a flaw - two users could share an email, and a GSI
    partition key does not enforce uniqueness. Design a change that makes email
    genuinely unique, and explain what it costs you on every write.
    *Hint: uniqueness in DynamoDB is enforced by the primary key, not an index.*

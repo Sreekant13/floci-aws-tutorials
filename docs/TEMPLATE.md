@@ -9,7 +9,7 @@ Copy this file to `tutorials/NN-service/README.md` and fill it in.
 
 ## Sections, in order
 
-### 1. What you'll build
+### 1. What you will build
 
 One paragraph plus a diagram. The student should be able to decide in ten
 seconds whether this is the tutorial they want. Diagrams go inline as Mermaid
@@ -50,7 +50,7 @@ Numbered steps. Every command copy-pasteable, one command per block, no `$`
 prompt prefix and no interleaved output inside the fence. Show expected output
 in a *separate* block underneath so the student can diff against reality.
 
-Explain the *why* of each flag the first time it appears. Don't explain it
+Explain the *why* of each flag the first time it appears. Do not explain it
 again in later tutorials -- link back instead.
 
 ### 6. The same thing in code
@@ -97,7 +97,7 @@ something this repo glossed over.
 Good entries look like:
 
 > - IAM policies are accepted and stored, but **not enforced** on most calls.
->   A request that would be denied in real AWS will succeed here. Don't use
+>   A request that would be denied in real AWS will succeed here. Do not use
 >   these tutorials to learn least-privilege policy authoring.
 > - Presigned URL expiry is honoured, but clock skew tolerance differs.
 
@@ -121,7 +121,7 @@ Do not include solutions. Do include a hint for #3.
 - Must clean up after itself, including on failure (`trap ... EXIT`).
 - Must exit non-zero on any failure. `summary` does this for you.
 - Must not depend on any other tutorial having run first.
-- Must finish in under two minutes. If it can't, it's testing too much.
+- Must finish in under two minutes. If it cannot, it is testing too much.
 
 ## Style
 

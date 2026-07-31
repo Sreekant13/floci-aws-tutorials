@@ -3,7 +3,7 @@
 Hands-on AWS tutorials that run entirely on your laptop. **No AWS account, no
 credit card, no credentials, no bill.**
 
-Each tutorial uses [Floci](https://floci.io/) — an MIT-licensed local cloud
+Each tutorial uses [Floci](https://floci.io/) - an MIT-licensed local cloud
 emulator that speaks the real AWS wire protocol on `localhost:4566`. You write
 ordinary `aws` CLI commands and ordinary boto3 / AWS SDK v3 code. The only
 difference from real AWS is one endpoint override, and every tutorial points
@@ -31,7 +31,7 @@ If that listed your bucket, start at [`00-setup`](tutorials/00-setup/).
 
 | # | Topic | Services | Time |
 |---|---|---|---|
-| [00](tutorials/00-setup/) | Setup | — | 20 min |
+| [00](tutorials/00-setup/) | Setup | - | 20 min |
 | [01](tutorials/01-s3/) | Object storage | S3 | 50 min |
 | [02](tutorials/02-dynamodb/) | Key-value data | DynamoDB | 60 min |
 | 03 | Serverless functions | Lambda | _planned_ |
@@ -49,8 +49,8 @@ barrier to students actually *practising* cloud work rather than reading about
 it.
 
 Floci removes it. It starts in ~24ms, idles at ~13 MiB, accepts any credentials,
-and runs 68 AWS services. Lambda, RDS, EC2, ECS and OpenSearch aren't emulated
-at all — Floci launches real engines in Docker — so those behave very close to
+and runs 68 AWS services. Lambda, RDS, EC2, ECS and OpenSearch are not emulated
+at all - Floci launches real engines in Docker - so those behave very close to
 production.
 
 The trade is fidelity. Emulation is not the real thing, and pretending
@@ -61,17 +61,17 @@ rather than what the vendor docs claim.
 
 ## How this repo is built
 
-- **[`docs/TEMPLATE.md`](docs/TEMPLATE.md)** — the structure every tutorial
+- **[`docs/TEMPLATE.md`](docs/TEMPLATE.md)** - the structure every tutorial
   follows. Read this before writing a new one.
-- **[`docs/COVERAGE.md`](docs/COVERAGE.md)** — the hand-verified support matrix.
+- **[`docs/COVERAGE.md`](docs/COVERAGE.md)** - the hand-verified support matrix.
   Written first; it decides what gets a tutorial.
-- **`scripts/smoke-test.sh`** — probes candidate services with the operations a
+- **`scripts/smoke-test.sh`** - probes candidate services with the operations a
   tutorial would actually need, and emits the raw matrix.
-- **`tutorials/NN-*/verify.sh`** — runs that tutorial's commands headless and
+- **`tutorials/NN-*/verify.sh`** - runs that tutorial's commands headless and
   exits non-zero on failure.
-- **`scripts/verify-all.sh`** — runs every one of them.
-- **`.github/workflows/verify.yml`** — runs the lot on push and weekly, so a
-  new Floci release can't silently break a tutorial.
+- **`scripts/verify-all.sh`** - runs every one of them.
+- **`.github/workflows/verify.yml`** - runs the lot on push and weekly, so a
+  new Floci release cannot silently break a tutorial.
 
 Run everything locally:
 
@@ -101,7 +101,7 @@ tutorials/
 ## Safety
 
 Floci needs no credentials and should never be exposed beyond `localhost`. It
-performs no real authorisation — any request that looks well-formed succeeds.
+performs no real authorisation - any request that looks well-formed succeeds.
 Never point these tutorials at a real AWS endpoint, and never put real
 credentials in this repository.
 

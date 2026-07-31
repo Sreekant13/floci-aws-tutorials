@@ -1,13 +1,13 @@
 ---
-title: "00 — Setup"
+title: "00 - Setup"
 permalink: /tutorials/00-setup/
 ---
 
-# 00 — Setup
+# 00 - Setup
 
-**Time: 20 minutes.** Do this once. Every other tutorial assumes it's done.
+**Time: 20 minutes.** Do this once. Every other tutorial assumes it is done.
 
-## What you'll build
+## What you will build
 
 A working local AWS environment: Floci running in Docker, the AWS CLI talking
 to it instead of to Amazon, and a verified round-trip.
@@ -24,19 +24,19 @@ flowchart LR
 Learning AWS normally means creating an account, attaching a credit card, and
 hoping you remember to tear down that NAT Gateway. Floci removes all of that:
 it speaks the real AWS wire protocol on `localhost`, accepts any credentials,
-and costs nothing. The code you write here runs unchanged against real AWS —
+and costs nothing. The code you write here runs unchanged against real AWS -
 you delete one line.
 
-That's the trade you're making, and it's worth being clear-eyed about it:
+That is the trade you are making, and it is worth being clear-eyed about it:
 you get free, fast, offline iteration, and you give up perfect fidelity. Each
 tutorial ends with a section listing exactly where the two diverge.
 
 ## Prerequisites
 
-- **Docker** — Floci is a container, and Lambda/RDS/EC2 launch further
+- **Docker** - Floci is a container, and Lambda/RDS/EC2 launch further
   containers underneath. Non-negotiable.
-- **AWS CLI v2** — v1 does not support `AWS_ENDPOINT_URL`.
-- **Python 3.9+** and **Node 18+** — only for the SDK sections.
+- **AWS CLI v2** - v1 does not support `AWS_ENDPOINT_URL`.
+- **Python 3.9+** and **Node 18+** - only for the SDK sections.
 
 Check what you have:
 
@@ -70,8 +70,8 @@ floci --version
 floci start
 ```
 
-Startup is fast — a native GraalVM binary, roughly 24ms to boot with a ~13 MiB
-idle footprint. If it takes noticeably longer, that's Docker pulling the image
+Startup is fast - a native GraalVM binary, roughly 24ms to boot with a ~13 MiB
+idle footprint. If it takes noticeably longer, that is Docker pulling the image
 on first run, not Floci.
 
 ## 3. Point your shell at it
@@ -80,8 +80,8 @@ on first run, not Floci.
 eval $(floci env)
 ```
 
-On PowerShell, `floci env` prints the equivalent `$env:` assignments — run
-`floci env` alone first to see what it's setting.
+On PowerShell, `floci env` prints the equivalent `$env:` assignments - run
+`floci env` alone first to see what it is setting.
 
 It exports four things:
 
@@ -92,7 +92,7 @@ It exports four things:
 | `AWS_SECRET_ACCESS_KEY` | `test` | Same |
 | `AWS_DEFAULT_REGION` | `us-east-1` | Region is still part of the request signature |
 
-The credentials are deliberately fake. Floci has no auth backend — anything
+The credentials are deliberately fake. Floci has no auth backend - anything
 that looks like a valid signature is accepted. This is also why you must never
 expose it beyond `localhost`.
 
@@ -150,13 +150,13 @@ floci snapshot save before-experiment
 - **No authentication, at all.** Any credential string works, and IAM policies
   are stored but largely not enforced. A call that real AWS would deny with
   `AccessDenied` will very likely succeed here. Tutorial `06-iam` covers this
-  in detail — until then, don't assume anything you learn here about
+  in detail - until then, do not assume anything you learn here about
   permissions transfers.
 - **One account, one region, by default.** Cross-account and cross-region
   behaviour is not exercised by these tutorials.
 - **No cost, no quotas, no throttling.** Real AWS will rate-limit and bill you.
   Nothing here teaches you to feel that.
-- **Some services are Docker-backed rather than emulated** — Lambda, RDS, EC2,
+- **Some services are Docker-backed rather than emulated** - Lambda, RDS, EC2,
   ECS, OpenSearch run genuine engines in containers. Those behave *very* close
   to real. Purely emulated services are the ones to be careful with.
 
@@ -166,7 +166,7 @@ floci snapshot save before-experiment
    `--persist ./data` and confirm it survives.
 2. Run `floci env` and set the same four variables by hand in a fresh shell
    without using `eval`. Verify `aws s3 ls` still works. Why does region matter
-   if there's only one?
+   if there is only one?
 3. Floci also emulates Azure (`:4577`), GCP (`:4588`) and OCI (`:4599`). Start
    `floci-gcp`, create a Cloud Storage bucket with `gsutil` or `gcloud`, and
    write down what changed about the auth story compared to AWS.

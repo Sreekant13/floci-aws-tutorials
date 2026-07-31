@@ -1,13 +1,13 @@
 ---
-title: "01 — S3: object storage"
+title: "01 - S3: object storage"
 permalink: /tutorials/01-s3/
 ---
 
-# 01 — S3: object storage
+# 01 - S3: object storage
 
 **Time: 50 minutes.** Assumes [`00-setup`](../00-setup/) is done.
 
-## What you'll build
+## What you will build
 
 A bucket that stores files, hands out time-limited download links to people
 who have no AWS credentials, keeps old versions of overwritten objects, and
@@ -25,11 +25,11 @@ flowchart LR
 
 S3 is the default answer to "where do we put this file". Uploads, backups,
 logs, build artifacts, static sites, and the storage layer under most data
-pipelines. It's the oldest AWS service and the one you're most certain to meet.
+pipelines. It is the oldest AWS service and the one you are most certain to meet.
 
 Two ideas here matter more than the API surface. **Presigned URLs** let you
-grant temporary access to a single object without giving anyone credentials —
-that's how "download your invoice" links work. **Versioning** turns a delete
+grant temporary access to a single object without giving anyone credentials -
+that is how "download your invoice" links work. **Versioning** turns a delete
 into a tombstone rather than a loss.
 
 ## Prerequisites
@@ -46,7 +46,7 @@ floci start && eval $(floci env)
 aws s3api create-bucket --bucket floci-demo
 ```
 
-Bucket names are globally unique in real AWS — `floci-demo` is almost certainly
+Bucket names are globally unique in real AWS - `floci-demo` is almost certainly
 taken there. Locally you have the namespace to yourself, which is itself a
 divergence worth remembering.
 
@@ -64,7 +64,7 @@ printf 'the quick brown fox\n' > sample.txt
 aws s3api put-object --bucket floci-demo --key notes/sample.txt --body sample.txt
 ```
 
-Note the key is `notes/sample.txt`. S3 has **no directories** — that slash is
+Note the key is `notes/sample.txt`. S3 has **no directories** - that slash is
 just a character in the key. The console draws folders by splitting on `/`, but
 nothing hierarchical exists underneath.
 
@@ -100,7 +100,7 @@ curl -s "$(aws s3 presign s3://floci-demo/notes/sample.txt --expires-in 300)"
 ```
 
 Look at the URL itself. The signature, expiry, and your access key ID are all
-query parameters. Nothing secret is in there — the signature proves you
+query parameters. Nothing secret is in there - the signature proves you
 authorised this exact object for this exact window, and it cannot be edited to
 mean anything else.
 
@@ -152,7 +152,7 @@ is where Floci and real AWS part company.
 aws s3api list-object-versions --bucket floci-demo --prefix notes/ --query 'Versions[].{Key:Key,Id:VersionId}' --output table
 ```
 
-Its version ID is the literal string `null`. That matches real AWS exactly —
+Its version ID is the literal string `null`. That matches real AWS exactly -
 pre-versioning objects get a `null` version ID rather than a generated one.
 
 Now overwrite it and list again:
@@ -196,8 +196,8 @@ Fetch the older one by ID (substitute a `VersionId` from the table above):
 aws s3api get-object --bucket floci-demo --key drafts/essay.txt --version-id VERSION_ID old.txt
 ```
 
-Versioning cannot be turned off once enabled — only suspended. That's true in
-real AWS too, and it's a common source of surprise storage bills.
+Versioning cannot be turned off once enabled - only suspended. That is true in
+real AWS too, and it is a common source of surprise storage bills.
 
 ## 6. Static website hosting
 
@@ -235,7 +235,7 @@ cd node && npm install && node s3-demo.mjs
 ```
 
 Read [`python/s3_demo.py`](python/s3_demo.py) and note the single Floci-specific
-line — the `endpoint_url` argument. Delete it and the same file talks to real
+line - the `endpoint_url` argument. Delete it and the same file talks to real
 AWS. That is the whole trick.
 
 ## Verify
@@ -250,8 +250,8 @@ AWS. That is the whole trick.
 aws s3 rb s3://floci-demo --force
 ```
 
-A versioned bucket won't delete while old versions remain; `--force` removes
-them first. In real AWS you'd need a lifecycle rule or an explicit
+A versioned bucket will not delete while old versions remain; `--force` removes
+them first. In real AWS you would need a lifecycle rule or an explicit
 `delete-objects` over every version.
 
 ## How this differs from real AWS
@@ -261,16 +261,16 @@ Verified by hand against Floci 0.2.0 on 2026-07-31. See
 
 - **Overwriting a pre-versioning object destroys its `null` version.** Real AWS
   retains it; Floci discards it silently and the content becomes unrecoverable.
-  Covered in detail in step 5. This one loses data — it is the divergence to
+  Covered in detail in step 5. This one loses data - it is the divergence to
   remember from this tutorial.
 - **Bucket names are not globally unique.** Locally you will never hit
   `BucketAlreadyExists`, which is the single most common real-world S3 error.
 - **Presigned URLs point at `localhost:4566`**, not `s3.amazonaws.com`. Share
   one with a classmate and it will not resolve for them.
 - **No storage classes, no lifecycle transitions.** Glacier, Intelligent-Tiering
-  and expiry rules are either accepted-and-ignored or unsupported. Don't learn
+  and expiry rules are either accepted-and-ignored or unsupported. Do not learn
   cost optimisation here.
-- **Bucket policies and ACLs are stored but not enforced** — see `00-setup`.
+- **Bucket policies and ACLs are stored but not enforced** - see `00-setup`.
   Public-vs-private is not something these tutorials can teach you honestly.
 - **Website hosting is served from the same port**, with no CloudFront, no
   custom domains, and no redirect rules.
@@ -282,7 +282,7 @@ Verified by hand against Floci 0.2.0 on 2026-07-31. See
    `list-multipart-uploads`. Why do these cost money in real AWS?
 2. Combine with `00-setup`: write a script that copies every object from one
    bucket to another, preserving content types, using only `s3api` calls. Then
-   confirm it's byte-identical.
+   confirm it is byte-identical.
 3. Presigned URLs can authorise uploads too, not just downloads
    (`presign` covers GET; the SDK exposes `generate_presigned_post`). Build a
    flow where a client with no credentials uploads directly to your bucket, and
