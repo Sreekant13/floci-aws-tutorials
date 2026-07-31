@@ -33,7 +33,7 @@ If that listed your bucket, you are ready.
 |---|---|---|---|
 | [00](tutorials/00-setup/) | Setup | — | 20 min |
 | [01](tutorials/01-s3/) | Object storage | S3 | 50 min |
-| 02 | Key-value data | DynamoDB | _in progress_ |
+| [02](tutorials/02-dynamodb/) | Key-value data | DynamoDB | 60 min |
 | 03 | Serverless functions | Lambda | _in progress_ |
 | 04 | Queues and pub/sub | SQS, SNS | _in progress_ |
 | 05 | A full REST API | API Gateway + Lambda + DynamoDB | _in progress_ |
@@ -65,7 +65,7 @@ headless and exits non-zero if any of them stop working. Continuous integration
 runs all of them on every push and once a week, so a new Floci release cannot
 quietly break a tutorial without anyone noticing.
 
-Source: [github.com/sreekant-baheti/floci-aws-tutorials](https://github.com/sreekant-baheti/floci-aws-tutorials)
+Source: [github.com/Sreekant13/floci-aws-tutorials](https://github.com/Sreekant13/floci-aws-tutorials)
 
 ---
 
