@@ -1,0 +1,14 @@
+# Shell scripts must keep LF endings. CRLF makes bash fail with
+# "\r: command not found" -- which would break every verify.sh in CI, since
+# the runner is Linux but this repo is authored on Windows.
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Keep source and docs consistent across platforms.
+*.md text eol=lf
+*.py text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.html text eol=lf
