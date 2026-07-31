@@ -53,20 +53,52 @@ assert_ok "enable versioning" -- aws s3api put-bucket-versioning \
 STATUS="$(aws s3api get-bucket-versioning --bucket "$BUCKET" --query Status --output text 2>/dev/null)"
 assert_eq "Enabled" "$STATUS" "versioning reports as Enabled"
 
-printf 'jumps over the lazy dog\n' > "$TMP/sample2.txt"
-aws s3api put-object --bucket "$BUCKET" --key notes/sample.txt --body "$TMP/sample2.txt" >/dev/null 2>&1
+# Objects written AFTER versioning is on are versioned normally.
+printf 'draft one\n' > "$TMP/d1.txt"
+printf 'draft two\n' > "$TMP/d2.txt"
+aws s3api put-object --bucket "$BUCKET" --key drafts/essay.txt --body "$(native_path "$TMP/d1.txt")" >/dev/null 2>&1
+aws s3api put-object --bucket "$BUCKET" --key drafts/essay.txt --body "$(native_path "$TMP/d2.txt")" >/dev/null 2>&1
 
-VCOUNT="$(aws s3api list-object-versions --bucket "$BUCKET" --prefix notes/ \
+VCOUNT="$(aws s3api list-object-versions --bucket "$BUCKET" --prefix drafts/ \
   --query 'length(Versions)' --output text 2>/dev/null)"
 if [ "${VCOUNT:-0}" -ge 2 ] 2>/dev/null; then
-  pass "overwriting kept the previous version (found $VCOUNT)"
+  pass "overwriting a post-versioning key kept both versions (found $VCOUNT)"
 else
-  fail "overwriting kept the previous version" "expected >=2 versions, got ${VCOUNT:-none}"
+  fail "overwriting a post-versioning key kept both versions" \
+       "expected >=2 versions, got ${VCOUNT:-none}"
 fi
 
-LATEST="$(aws s3api get-object --bucket "$BUCKET" --key notes/sample.txt "$TMP/latest.txt" >/dev/null 2>&1 \
-  && cat "$TMP/latest.txt")"
-assert_eq "jumps over the lazy dog" "$LATEST" "unversioned GET returns the newest version"
+LATEST="$(aws s3api get-object --bucket "$BUCKET" --key drafts/essay.txt \
+  "$(native_path "$TMP/latest.txt")" >/dev/null 2>&1 && cat "$TMP/latest.txt")"
+assert_eq "draft two" "$LATEST" "unversioned GET returns the newest version"
+
+# --------------------------------------------------------------------------
+# Documented divergence, asserted so we find out if Floci ever changes it.
+#
+# notes/sample.txt was written BEFORE versioning was enabled, so it carries
+# VersionId "null" -- same as real AWS. The divergence is what happens on
+# overwrite: real AWS keeps the null version alongside the new one, Floci 0.2.0
+# discards it and the original content becomes unrecoverable.
+#
+# If either assertion below starts failing, Floci has changed behaviour and the
+# tutorial's step 5 and section 9 must be rewritten.
+# --------------------------------------------------------------------------
+NULL_ID="$(aws s3api list-object-versions --bucket "$BUCKET" --prefix notes/ \
+  --query 'Versions[0].VersionId' --output text 2>/dev/null)"
+assert_eq "null" "$NULL_ID" "pre-versioning object carries VersionId 'null' (matches real AWS)"
+
+printf 'replacement\n' > "$TMP/repl.txt"
+aws s3api put-object --bucket "$BUCKET" --key notes/sample.txt \
+  --body "$(native_path "$TMP/repl.txt")" >/dev/null 2>&1
+
+REMAINING="$(aws s3api list-object-versions --bucket "$BUCKET" --prefix notes/ \
+  --query "length(Versions[?VersionId=='null'])" --output text 2>/dev/null)"
+if [ "${REMAINING:-0}" = "0" ]; then
+  pass "overwrite drops the null version (Floci divergence still present, tutorial accurate)"
+else
+  fail "overwrite drops the null version" \
+       "null version survived -- Floci may now match real AWS; rewrite step 5 and section 9"
+fi
 
 section "Static website hosting"
 printf '<h1>Served from S3</h1>\n' > "$TMP/index.html"

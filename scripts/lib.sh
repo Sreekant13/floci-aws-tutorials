@@ -81,6 +81,26 @@ assert_ok() {
 }
 
 # ---------------------------------------------------------------------------
+# Path translation
+#
+# On Windows the AWS CLI is a native .exe, but these scripts run under Git Bash
+# / MSYS. A path like /tmp/foo is meaningless to the CLI, so any argument using
+# file:// or fileb:// must be converted first, or you get a misleading
+# "Unable to load paramfile" that looks like a service failure.
+#
+#   aws lambda create-function --zip-file "fileb://$(native_path "$WORK/fn.zip")"
+#
+# No-op on Linux and macOS.
+# ---------------------------------------------------------------------------
+native_path() {
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$1"
+  else
+    printf '%s' "$1"
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # Floci lifecycle
 # ---------------------------------------------------------------------------
 

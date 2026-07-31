@@ -42,6 +42,7 @@ const s3 = new S3Client({
 
 const BUCKET = "floci-demo-node";
 const KEY = "notes/sample.txt";
+const DRAFT_KEY = "drafts/essay.txt";
 
 const step = (msg) => console.log(`\n==> ${msg}`);
 
@@ -85,23 +86,57 @@ async function main() {
   const res = await fetch(url);
   console.log(`    HTTP ${res.status}: ${JSON.stringify((await res.text()).trim())}`);
 
-  step("Enabling versioning and overwriting");
+  step("Enabling versioning");
   await s3.send(
     new PutBucketVersioningCommand({
       Bucket: BUCKET,
       VersioningConfiguration: { Status: "Enabled" },
     })
   );
-  await s3.send(
-    new PutObjectCommand({ Bucket: BUCKET, Key: KEY, Body: "jumps over the lazy dog\n" })
-  );
 
-  const { Versions = [], DeleteMarkers = [] } = await s3.send(
-    new ListObjectVersionsCommand({ Bucket: BUCKET, Prefix: "notes/" })
+  step("Writing a NEW key twice -- both versions are kept");
+  await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: DRAFT_KEY, Body: "draft one\n" }));
+  await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: DRAFT_KEY, Body: "draft two\n" }));
+  const drafts = await s3.send(
+    new ListObjectVersionsCommand({ Bucket: BUCKET, Prefix: "drafts/" })
   );
-  for (const v of Versions) {
+  for (const v of drafts.Versions ?? []) {
     console.log(`    ${v.Key}  version=${v.VersionId}${v.IsLatest ? "  <- current" : ""}`);
   }
+
+  // -------------------------------------------------------------------------
+  // The ordering trap. KEY was written before versioning was enabled, so it
+  // carries VersionId "null" -- same as real AWS.
+  //
+  // The divergence is what an overwrite does. Real AWS keeps the null version
+  // alongside the new one. Floci 0.2.0 discards it, and the original content
+  // becomes unrecoverable. See section 5 of ../README.md.
+  // -------------------------------------------------------------------------
+  step("The ordering trap: a key written BEFORE versioning was enabled");
+  const before = await s3.send(
+    new ListObjectVersionsCommand({ Bucket: BUCKET, Prefix: "notes/" })
+  );
+  console.log(`    before overwrite: ${JSON.stringify((before.Versions ?? []).map((v) => v.VersionId))}`);
+
+  await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: KEY, Body: "replacement\n" }));
+
+  const after = await s3.send(
+    new ListObjectVersionsCommand({ Bucket: BUCKET, Prefix: "notes/" })
+  );
+  const afterIds = (after.Versions ?? []).map((v) => v.VersionId);
+  console.log(`    after overwrite:  ${JSON.stringify(afterIds)}`);
+
+  if (!afterIds.includes("null")) {
+    console.log("    the 'null' version is GONE -- the original content is unrecoverable.");
+    console.log("    Real AWS would have kept it. This is a Floci divergence.");
+  } else {
+    console.log("    the 'null' version survived -- Floci now matches real AWS.");
+    console.log("    The tutorial's section 5 needs updating.");
+  }
+
+  const { Versions = [], DeleteMarkers = [] } = await s3.send(
+    new ListObjectVersionsCommand({ Bucket: BUCKET })
+  );
 
   step("Cleaning up");
   // A versioned bucket needs every version removed before it will delete.

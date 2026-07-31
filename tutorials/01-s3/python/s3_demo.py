@@ -32,6 +32,7 @@ s3 = boto3.client(
 
 BUCKET = "floci-demo-python"
 KEY = "notes/sample.txt"
+DRAFT_KEY = "drafts/essay.txt"
 
 
 def step(msg):
@@ -71,17 +72,44 @@ def main():
     with urllib.request.urlopen(url, timeout=10) as resp:
         print(f"    HTTP {resp.status}: {resp.read().decode().strip()!r}")
 
-    step("Enabling versioning and overwriting")
+    step("Enabling versioning")
     s3.put_bucket_versioning(
         Bucket=BUCKET,
         VersioningConfiguration={"Status": "Enabled"},
     )
-    s3.put_object(Bucket=BUCKET, Key=KEY, Body=b"jumps over the lazy dog\n")
 
-    versions = s3.list_object_versions(Bucket=BUCKET, Prefix="notes/").get("Versions", [])
-    for v in versions:
+    step("Writing a NEW key twice -- both versions are kept")
+    s3.put_object(Bucket=BUCKET, Key=DRAFT_KEY, Body=b"draft one\n")
+    s3.put_object(Bucket=BUCKET, Key=DRAFT_KEY, Body=b"draft two\n")
+    for v in s3.list_object_versions(Bucket=BUCKET, Prefix="drafts/").get("Versions", []):
         marker = "  <- current" if v["IsLatest"] else ""
         print(f"    {v['Key']}  version={v['VersionId']}{marker}")
+
+    # -----------------------------------------------------------------------
+    # The ordering trap. KEY was written before versioning was enabled, so it
+    # carries VersionId "null" -- same as real AWS.
+    #
+    # The divergence is what an overwrite does. Real AWS keeps the null version
+    # alongside the new one. Floci 0.2.0 discards it, and the original content
+    # becomes unrecoverable. See section 5 of ../README.md.
+    # -----------------------------------------------------------------------
+    step("The ordering trap: a key written BEFORE versioning was enabled")
+    before = s3.list_object_versions(Bucket=BUCKET, Prefix="notes/").get("Versions", [])
+    print(f"    before overwrite: {[v['VersionId'] for v in before]}")
+
+    s3.put_object(Bucket=BUCKET, Key=KEY, Body=b"replacement\n")
+
+    after = s3.list_object_versions(Bucket=BUCKET, Prefix="notes/").get("Versions", [])
+    print(f"    after overwrite:  {[v['VersionId'] for v in after]}")
+
+    if not any(v["VersionId"] == "null" for v in after):
+        print("    the 'null' version is GONE -- the original content is unrecoverable.")
+        print("    Real AWS would have kept it. This is a Floci divergence.")
+    else:
+        print("    the 'null' version survived -- Floci now matches real AWS.")
+        print("    The tutorial's section 5 needs updating.")
+
+    versions = s3.list_object_versions(Bucket=BUCKET).get("Versions", [])
 
     step("Cleaning up")
     # A versioned bucket needs every version removed before it will delete.

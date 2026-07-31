@@ -32,6 +32,12 @@ RESULTS=()
 
 command -v aws >/dev/null 2>&1 || { echo "aws CLI not found -- install AWS CLI v2 first" >&2; exit 1; }
 
+# On Windows the AWS CLI is a native .exe and cannot resolve MSYS paths like
+# /tmp/foo, so file:// and fileb:// arguments must be converted first.
+native_path() {
+  if command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else printf '%s' "$1"; fi
+}
+
 if ! curl -fsS --max-time 5 "$AWS_ENDPOINT_URL" >/dev/null 2>&1; then
   echo "Floci not reachable at $AWS_ENDPOINT_URL -- run 'floci start' first" >&2
   exit 1
@@ -139,19 +145,27 @@ export const handler = async (event) => ({
   body: JSON.stringify({ ok: true, got: event })
 });
 JS
-  ( cd "$WORK" && zip -q fn.zip index.mjs ) 2>/dev/null
+  # Git Bash on Windows ships no `zip`, so fall back to Python's zipfile.
+  if command -v zip >/dev/null 2>&1; then
+    ( cd "$WORK" && zip -q fn.zip index.mjs ) 2>/dev/null
+  elif command -v python >/dev/null 2>&1; then
+    python -c "import zipfile,sys; zipfile.ZipFile(sys.argv[1],'w').write(sys.argv[2],'index.mjs')" \
+      "$WORK/fn.zip" "$WORK/index.mjs" 2>/dev/null
+  fi
+
   if [ -f "$WORK/fn.zip" ]; then
     probe lambda "create function" aws lambda create-function --function-name "$FN" \
         --runtime nodejs20.x --handler index.handler \
         --role "arn:aws:iam::000000000000:role/lambda-role" \
-        --zip-file "fileb://$WORK/fn.zip"
+        --zip-file "fileb://$(native_path "$WORK/fn.zip")"
     sleep 3
     probe lambda "invoke" aws lambda invoke --function-name "$FN" \
-        --payload '{"hello":"world"}' --cli-binary-format raw-in-base64-out "$WORK/resp.json"
+        --payload '{"hello":"world"}' --cli-binary-format raw-in-base64-out \
+        "$(native_path "$WORK/resp.json")"
     probe lambda "get function" aws lambda get-function --function-name "$FN"
   else
-    echo "  [skip] lambda -- 'zip' not available to build the deployment package"
-    RESULTS+=("lambda|packaging|fail|zip command unavailable on this machine")
+    echo "  [skip] lambda -- could not build the deployment package (no zip, no python)"
+    RESULTS+=("lambda|packaging|fail|neither zip nor python available to build the package")
   fi
 fi
 
@@ -183,7 +197,8 @@ Resources:
     Type: AWS::S3::Bucket
 YML
   probe cloudformation "create stack" aws cloudformation create-stack \
-      --stack-name "smoke-stack-$SUFFIX" --template-body "file:///tmp/$SUFFIX-stack.yml"
+      --stack-name "smoke-stack-$SUFFIX" \
+      --template-body "file://$(native_path "/tmp/$SUFFIX-stack.yml")"
   sleep 3
   probe cloudformation "describe stack" aws cloudformation describe-stacks --stack-name "smoke-stack-$SUFFIX"
 fi

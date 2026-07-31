@@ -106,30 +106,94 @@ mean anything else.
 
 ## 5. Versioning
 
+Turn versioning on **before** putting the objects you care about. The next
+section explains why that ordering matters more here than it does on real AWS.
+
 ```bash
 aws s3api put-bucket-versioning --bucket floci-demo --versioning-configuration Status=Enabled
 ```
 
-Overwrite the object:
+```bash
+aws s3api get-bucket-versioning --bucket floci-demo
+```
+
+Now write a new key twice:
 
 ```bash
-printf 'jumps over the lazy dog\n' > sample.txt
+printf 'draft one\n' > draft.txt
+```
+
+```bash
+aws s3api put-object --bucket floci-demo --key drafts/essay.txt --body draft.txt
+```
+
+```bash
+printf 'draft two\n' > draft.txt
+```
+
+```bash
+aws s3api put-object --bucket floci-demo --key drafts/essay.txt --body draft.txt
+```
+
+Each `put-object` returned a `VersionId`. Both versions exist:
+
+```bash
+aws s3api list-object-versions --bucket floci-demo --prefix drafts/ --query 'Versions[].{Key:Key,Id:VersionId,Latest:IsLatest}' --output table
+```
+
+### The ordering trap
+
+Objects written **before** versioning was enabled behave differently, and this
+is where Floci and real AWS part company.
+
+`notes/sample.txt` from step 2 predates versioning. Look at it:
+
+```bash
+aws s3api list-object-versions --bucket floci-demo --prefix notes/ --query 'Versions[].{Key:Key,Id:VersionId}' --output table
+```
+
+Its version ID is the literal string `null`. That matches real AWS exactly —
+pre-versioning objects get a `null` version ID rather than a generated one.
+
+Now overwrite it and list again:
+
+```bash
+printf 'replacement\n' > sample.txt
 ```
 
 ```bash
 aws s3api put-object --bucket floci-demo --key notes/sample.txt --body sample.txt
 ```
 
-Both versions now exist:
+```bash
+aws s3api list-object-versions --bucket floci-demo --prefix notes/ --query 'Versions[].{Key:Key,Id:VersionId}' --output table
+```
+
+On **real AWS** you would now see two entries: the `null` version holding your
+original content, plus the new version. The original stays retrievable with
+`--version-id null`.
+
+On **Floci 0.2.0** the `null` version is **gone**. Only the new version remains,
+and the original content cannot be recovered:
 
 ```bash
-aws s3api list-object-versions --bucket floci-demo --prefix notes/ --query 'Versions[].{Key:Key,Id:VersionId,Latest:IsLatest}' --output table
+aws s3api get-object --bucket floci-demo --key notes/sample.txt --version-id null recovered.txt
 ```
+
+That fails. No error was raised during the overwrite, and nothing in
+`list-object-versions` records that the old content ever existed.
+
+This is the most consequential divergence in this tutorial. Turning versioning
+on for a bucket that already holds data does **not** protect that data here,
+even though `get-bucket-versioning` reports `Enabled`. If you are practising a
+backup or retention workflow, practise it on keys written after versioning was
+turned on, or you will be rehearsing a procedure that does not do what you
+think it does.
 
 Fetch the older one by ID (substitute a `VersionId` from the table above):
 
 ```bash
-aws s3api get-object --bucket floci-demo --key notes/sample.txt --version-id VERSION_ID old.txt
+aws s3api get-object --bucket floci-demo --key drafts/essay.txt --version-id VERSION_ID old.txt
 ```
 
 Versioning cannot be turned off once enabled — only suspended. That's true in
@@ -192,13 +256,17 @@ them first. In real AWS you'd need a lifecycle rule or an explicit
 
 ## How this differs from real AWS
 
-> Populate the rest of this from `docs/COVERAGE.md` after running the smoke
-> test. The entries below are the ones to verify first.
+Verified by hand against Floci 0.2.0 on 2026-07-31. See
+[`docs/COVERAGE.md`](../../docs/COVERAGE.md) for the full matrix.
 
-- **Bucket names are not globally unique.** Locally you'll never hit
+- **Overwriting a pre-versioning object destroys its `null` version.** Real AWS
+  retains it; Floci discards it silently and the content becomes unrecoverable.
+  Covered in detail in step 5. This one loses data — it is the divergence to
+  remember from this tutorial.
+- **Bucket names are not globally unique.** Locally you will never hit
   `BucketAlreadyExists`, which is the single most common real-world S3 error.
 - **Presigned URLs point at `localhost:4566`**, not `s3.amazonaws.com`. Share
-  one with a classmate and it won't resolve for them.
+  one with a classmate and it will not resolve for them.
 - **No storage classes, no lifecycle transitions.** Glacier, Intelligent-Tiering
   and expiry rules are either accepted-and-ignored or unsupported. Don't learn
   cost optimisation here.
