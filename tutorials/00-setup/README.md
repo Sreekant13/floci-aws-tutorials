@@ -1,3 +1,8 @@
+---
+title: "00 — Setup"
+permalink: /tutorials/00-setup/
+---
+
 # 00 — Setup
 
 **Time: 20 minutes.** Do this once. Every other tutorial assumes it's done.

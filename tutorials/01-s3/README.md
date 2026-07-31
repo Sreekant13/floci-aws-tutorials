@@ -1,3 +1,8 @@
+---
+title: "01 — S3: object storage"
+permalink: /tutorials/01-s3/
+---
+
 # 01 — S3: object storage
 
 **Time: 50 minutes.** Assumes [`00-setup`](../00-setup/) is done.

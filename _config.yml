@@ -1,0 +1,35 @@
+title: Floci AWS Tutorials
+description: >-
+  Hands-on AWS tutorials that run entirely on your laptop.
+  No AWS account, no credit card, no credentials, no bill.
+
+# Stock GitHub Pages theme, deliberately uncustomised -- the content is the
+# deliverable, not the styling.
+theme: jekyll-theme-cayman
+
+# Rendered on the site header by the Cayman theme.
+show_downloads: false
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Repo plumbing that should not become web pages.
+exclude:
+  - scripts/
+  - .github/
+  - .gitattributes
+  - .gitignore
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - "**/node_modules/"
+  - "**/package.json"
+  - "**/package-lock.json"
+  - "**/requirements.txt"
+  - "**/__pycache__/"
+
+# Keep the SDK examples browsable as source rather than rendered as pages.
+include:
+  - .nojekyll

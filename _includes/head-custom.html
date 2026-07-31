@@ -1,0 +1,25 @@
+<!--
+  Cayman (like all GitHub Pages themes) loads _includes/head-custom.html if it
+  exists. This is the documented extension point.
+
+  Sole purpose: render the ```mermaid fences in the tutorials. GitHub's repo
+  view renders them natively; the published Pages site does not, so without
+  this the architecture diagrams would show up as raw text.
+
+  This is functionality, not styling -- the theme is otherwise untouched.
+-->
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+
+  // Kramdown emits ```mermaid as <pre><code class="language-mermaid">.
+  // Mermaid expects <pre class="mermaid">, so rewrite them before init.
+  document.addEventListener("DOMContentLoaded", () => {
+    for (const code of document.querySelectorAll("code.language-mermaid")) {
+      const pre = document.createElement("pre");
+      pre.className = "mermaid";
+      pre.textContent = code.textContent;
+      code.closest("pre").replaceWith(pre);
+    }
+    mermaid.initialize({ startOnLoad: true });
+  });
+</script>
