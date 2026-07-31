@@ -64,7 +64,7 @@ Legend: :white_check_mark: covered / :warning: partial, tutorial notes the gap /
 |---|---|---|---|
 | S3 | :warning: | `01-s3` | Fully functional except the versioning divergence below |
 | DynamoDB | :warning: | `02-dynamodb` | Fully functional; GSI consistency differs - see below |
-| Lambda | :white_check_mark: | `03-lambda` | Real Docker execution |
+| Lambda | :warning: | `03-lambda` | Very high fidelity; IAM role unchecked and no cold starts - see below |
 | SQS + SNS | :white_check_mark: | `04-messaging` | SNS→SQS subscription delivery still to be probed |
 | API Gateway | :white_check_mark: | `05-serverless-api` | Both REST and HTTP APIs create cleanly |
 | IAM / STS / Secrets Manager | :warning: | `06-iam` | Policies stored but enforcement not verified - see below |
@@ -84,6 +84,9 @@ Every row here must be quoted in the relevant tutorial's section 9.
 | DynamoDB | **GSIs are synchronous.** An item written to the base table is queryable via a GSI immediately. Real AWS GSIs are eventually consistent and reject strongly-consistent reads outright. | Documented in `02-dynamodb` section 9 and asserted in its `verify.sh`. Code that write-then-reads a GSI works here and fails intermittently in production. |
 | DynamoDB | Tables and GSIs go `ACTIVE` instantly; no `CREATING` or `BACKFILLING` state | Noted in `02-dynamodb` - a missing wait-for-active loop never surfaces here |
 | DynamoDB | No capacity model, throttling, or hot-partition penalty | Noted in `02-dynamodb` - partition-key design cannot be learned by experiment here |
+| Lambda | **The IAM execution role is not validated.** Any ARN is accepted, including one naming a role that does not exist. On real AWS a role missing `logs:*` produces a function that runs but silently writes no logs. | Documented in `03-lambda` section 9. An entire class of real failure is invisible here. |
+| Lambda | Functions are `Active` immediately; real AWS returns while still `Pending` and rejects early invocations | Noted in `03-lambda`. `deploy.py` polls for `Active` anyway, since that is the correct production habit. |
+| Lambda | No cold starts, concurrency limits, or per-millisecond billing | Noted in `03-lambda` |
 | All | No authentication. Any credential string is accepted. | Noted in `00-setup` |
 | All | No cost, quotas, throttling, or rate limiting | Noted in `00-setup` |
 
@@ -103,6 +106,16 @@ Not yet tested, and therefore not yet claimed anywhere in the tutorials:
 - Lambda triggered by an API Gateway route
 - Step Functions actual execution, not just state machine creation
 - CloudFormation stack updates, deletes, and rollback
+
+## Windows toolchain traps
+
+Not Floci behaviour, but they look like it and cost real time. Both are handled
+by helpers in `scripts/lib.sh`.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `Unable to load paramfile file:///tmp/...` | Git Bash passes a POSIX path to the AWS CLI, which is a native Windows binary | `native_path()`, which wraps `cygpath -w` |
+| `log group does not exist: C:/Program Files/Git/aws/lambda/...` | Git Bash sees the leading slash of `/aws/lambda/...` and rewrites it as a file path | `msys_safe()`, which sets `MSYS_NO_PATHCONV=1` for one command only. It cannot be set globally, because that breaks `native_path()`. |
 
 ## Dropped from scope
 

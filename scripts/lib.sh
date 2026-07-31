@@ -101,6 +101,25 @@ native_path() {
 }
 
 # ---------------------------------------------------------------------------
+# The opposite problem.
+#
+# Some AWS arguments are not paths but start with a slash, most notably
+# CloudWatch log group names like /aws/lambda/my-function. Git Bash sees the
+# leading slash and helpfully rewrites it into C:/Program Files/Git/aws/...
+# before the CLI ever sees it, producing a baffling "log group does not exist".
+#
+# Wrap those calls so the argument is passed through untouched:
+#
+#   msys_safe aws logs describe-log-streams --log-group-name "/aws/lambda/$FN"
+#
+# Note this cannot be turned on globally: it would also stop the conversion
+# that native_path relies on. Apply it per command.
+# ---------------------------------------------------------------------------
+msys_safe() {
+  MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' "$@"
+}
+
+# ---------------------------------------------------------------------------
 # Floci lifecycle
 # ---------------------------------------------------------------------------
 

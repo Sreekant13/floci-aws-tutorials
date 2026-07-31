@@ -34,7 +34,7 @@ If that listed your bucket, start at [`00-setup`](tutorials/00-setup/).
 | [00](tutorials/00-setup/) | Setup | - | 20 min |
 | [01](tutorials/01-s3/) | Object storage | S3 | 50 min |
 | [02](tutorials/02-dynamodb/) | Key-value data | DynamoDB | 60 min |
-| 03 | Serverless functions | Lambda | _planned_ |
+| [03](tutorials/03-lambda/) | Serverless functions | Lambda | 60 min |
 | 04 | Queues and pub/sub | SQS, SNS | _planned_ |
 | 05 | A full REST API | API Gateway + Lambda + DynamoDB | _planned_ |
 | 06 | Identity and secrets | IAM, STS, Secrets Manager | _planned_ |
