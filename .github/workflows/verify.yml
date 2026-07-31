@@ -1,0 +1,113 @@
+name: verify tutorials
+
+# Every tutorial ships a verify.sh that exercises the exact commands the
+# README tells students to run. Running them on every push is what stops the
+# tutorials rotting as Floci evolves.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly, so we find out when a new Floci release breaks something even if
+    # nobody has pushed.
+    - cron: "0 6 * * 1"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install AWS CLI v2
+        run: |
+          curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscli.zip
+          unzip -q awscli.zip
+          sudo ./aws/install --update
+          aws --version
+
+      - name: Install Floci
+        run: |
+          curl -fsSL https://floci.io/install.sh | sh
+          echo "$HOME/.floci/bin" >> "$GITHUB_PATH"
+
+      - name: Start Floci
+        run: |
+          floci start
+          # Give the emulator a moment to bind before the first probe.
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 2 http://localhost:4566 >/dev/null 2>&1; then
+              echo "Floci is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Floci did not come up within 30s" >&2
+          floci logs || true
+          exit 1
+
+      - name: Record coverage matrix
+        # Informational -- a probe failing here is data about Floci, not a
+        # broken build, so this step never fails the job.
+        continue-on-error: true
+        run: ./scripts/smoke-test.sh
+
+      - name: Verify every tutorial
+        env:
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: us-east-1
+        run: ./scripts/verify-all.sh
+
+      - name: Run the Python SDK examples
+        env:
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          for d in tutorials/*/python; do
+            [ -f "$d/requirements.txt" ] || continue
+            echo "=== $d ==="
+            pip install -q -r "$d/requirements.txt"
+            for f in "$d"/*.py; do python "$f"; done
+          done
+
+      - name: Run the Node SDK examples
+        env:
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          for d in tutorials/*/node; do
+            [ -f "$d/package.json" ] || continue
+            echo "=== $d ==="
+            ( cd "$d" && npm install --silent && npm start )
+          done
+
+      - name: Upload coverage matrix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-matrix
+          path: scripts/out/
+          if-no-files-found: ignore
+
+      - name: Floci logs on failure
+        if: failure()
+        run: floci logs || true

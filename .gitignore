@@ -1,0 +1,33 @@
+# Floci local state
+.floci/
+floci-data/
+data/
+
+# Language toolchains
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Build output
+dist/
+build/
+*.zip
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Scratch -- smoke test output is regenerated, the curated matrix in
+# docs/COVERAGE.md is what gets committed.
+scripts/out/
+
+# Never commit real credentials. Floci needs none.
+.env
+.env.*
+!.env.example
+credentials
