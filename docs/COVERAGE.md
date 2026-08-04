@@ -65,7 +65,7 @@ Legend: :white_check_mark: covered / :warning: partial, tutorial notes the gap /
 | S3 | :warning: | `01-s3` | Fully functional except the versioning divergence below |
 | DynamoDB | :warning: | `02-dynamodb` | Fully functional; GSI consistency differs - see below |
 | Lambda | :warning: | `03-lambda` | Very high fidelity; IAM role unchecked and no cold starts - see below |
-| SQS + SNS | :white_check_mark: | `04-messaging` | SNS→SQS subscription delivery still to be probed |
+| SQS + SNS | :white_check_mark: | `04-messaging` | Fan-out, DLQ redrive, raw delivery, filter policies and FIFO all confirmed |
 | API Gateway | :white_check_mark: | `05-serverless-api` | Both REST and HTTP APIs create cleanly |
 | IAM / STS / Secrets Manager | :warning: | `06-iam` | Policies stored but enforcement not verified - see below |
 | Step Functions / EventBridge | :white_check_mark: | `07-orchestration` | Execution semantics still to be probed |
@@ -87,6 +87,8 @@ Every row here must be quoted in the relevant tutorial's section 9.
 | Lambda | **The IAM execution role is not validated.** Any ARN is accepted, including one naming a role that does not exist. On real AWS a role missing `logs:*` produces a function that runs but silently writes no logs. | Documented in `03-lambda` section 9. An entire class of real failure is invisible here. |
 | Lambda | Functions are `Active` immediately; real AWS returns while still `Pending` and rejects early invocations | Noted in `03-lambda`. `deploy.py` polls for `Active` anyway, since that is the correct production habit. |
 | Lambda | No cold starts, concurrency limits, or per-millisecond billing | Noted in `03-lambda` |
+| SQS | **Standard queues never reordered or duplicated a message in testing.** Real AWS standard queues explicitly permit both: they are at-least-once with best-effort ordering. Consumers that are not idempotent will pass here and fail in production. | Documented in `04-messaging` section 9. This is an absence of chaos rather than a missing feature, which makes it harder to notice and more dangerous. |
+| SQS | `ApproximateNumberOfMessages` is exact, and `receive-message` returned every available message | Noted in `04-messaging`. On real AWS both are approximate because the queue is distributed, so polling loops must not treat an empty response as an empty queue. |
 | All | No authentication. Any credential string is accepted. | Noted in `00-setup` |
 | All | No cost, quotas, throttling, or rate limiting | Noted in `00-setup` |
 
@@ -102,7 +104,10 @@ Not yet tested, and therefore not yet claimed anywhere in the tutorials:
   2026-07-31, all working. GSI creation via `update-table`, GSI queries,
   `begins_with` on sort keys, `ConditionalCheckFailedException`, and
   server-side atomic increments all behave correctly.
-- SNS → SQS subscription delivery end to end
+- ~~SNS to SQS subscription delivery end to end~~ - probed 2026-08-04 and
+  working, along with the SNS envelope, `RawMessageDelivery`, filter policies,
+  dead letter queue redrive via `maxReceiveCount`, visibility timeout
+  redelivery, long polling, and FIFO ordering within a message group.
 - Lambda triggered by an API Gateway route
 - Step Functions actual execution, not just state machine creation
 - CloudFormation stack updates, deletes, and rollback

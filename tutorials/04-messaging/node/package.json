@@ -1,0 +1,17 @@
+{
+  "name": "floci-tutorial-04-messaging",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SQS and SNS against the Floci local AWS emulator, using AWS SDK v3",
+  "scripts": {
+    "start": "node messaging-demo.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.600.0",
+    "@aws-sdk/client-sns": "^3.600.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
