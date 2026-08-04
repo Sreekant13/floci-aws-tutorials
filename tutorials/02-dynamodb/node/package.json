@@ -1,0 +1,17 @@
+{
+  "name": "floci-tutorial-02-dynamodb",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "DynamoDB against the Floci local AWS emulator, using AWS SDK v3",
+  "scripts": {
+    "start": "node ddb-demo.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

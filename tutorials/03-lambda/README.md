@@ -235,10 +235,20 @@ Do not export it globally. Other commands rely on that conversion working.
 cd python && pip install -r requirements.txt && python deploy.py
 ```
 
-[`python/deploy.py`](python/deploy.py) does the whole sequence with boto3:
-builds the zip in memory, deploys, invokes, triggers the failure, reconfigures,
-reads the logs, and cleans up. It also polls for `Active` before invoking, which
-is a habit worth keeping even though Floci is ready instantly.
+```bash
+cd node && npm install && node deploy.mjs
+```
+
+Both do the whole sequence: build the zip in memory, deploy, invoke, trigger the
+failure, reconfigure, read the logs, and clean up. Both poll for `Active` before
+invoking, which is a habit worth keeping even though Floci is ready instantly.
+
+One difference between them is worth a look. Python has `zipfile` in its
+standard library, so [`python/deploy.py`](python/deploy.py) builds the package in
+three lines. Node has only raw deflate, so [`node/deploy.mjs`](node/deploy.mjs)
+writes the zip container format by hand rather than adding a dependency for one
+file. That is more code than the interesting part of the tutorial, which is
+itself a useful thing to notice about packaging for Lambda.
 
 ## Verify
 

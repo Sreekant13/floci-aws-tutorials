@@ -1,0 +1,17 @@
+{
+  "name": "floci-tutorial-03-lambda",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lambda against the Floci local AWS emulator, using AWS SDK v3",
+  "scripts": {
+    "start": "node deploy.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-lambda": "^3.600.0",
+    "@aws-sdk/client-cloudwatch-logs": "^3.600.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

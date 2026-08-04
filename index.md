@@ -29,17 +29,21 @@ If that listed your bucket, you are ready.
 
 ## Tutorials
 
-| # | Topic | Services | Time |
-|---|---|---|---|
-| [00](tutorials/00-setup/) | Setup | - | 20 min |
-| [01](tutorials/01-s3/) | Object storage | S3 | 50 min |
-| [02](tutorials/02-dynamodb/) | Key-value data | DynamoDB | 60 min |
-| [03](tutorials/03-lambda/) | Serverless functions | Lambda | 60 min |
-| [04](tutorials/04-messaging/) | Queues and pub/sub | SQS, SNS | 60 min |
-| 05 | A full REST API | API Gateway + Lambda + DynamoDB | _in progress_ |
-| 06 | Identity and secrets | IAM, STS, Secrets Manager | _in progress_ |
-| 07 | Orchestration | Step Functions, EventBridge | _in progress_ |
-| 08 | Infrastructure as code | CloudFormation | _in progress_ |
+| # | Topic | Services | Checks | Time |
+|---|---|---|---|---|
+| [00](tutorials/00-setup/) | Setup | - | 11 | 20 min |
+| [01](tutorials/01-s3/) | Object storage | S3 | 17 | 50 min |
+| [02](tutorials/02-dynamodb/) | Key-value data | DynamoDB | 16 | 60 min |
+| [03](tutorials/03-lambda/) | Serverless functions | Lambda | 15 | 60 min |
+| [04](tutorials/04-messaging/) | Queues and pub/sub | SQS, SNS | 21 | 60 min |
+| 05 | A full REST API | API Gateway + Lambda + DynamoDB | | _in progress_ |
+| 06 | Identity and secrets | IAM, STS, Secrets Manager | | _in progress_ |
+| 07 | Orchestration | Step Functions, EventBridge | | _in progress_ |
+| 08 | Infrastructure as code | CloudFormation | | _in progress_ |
+
+Every tutorial has command line steps, the same thing in both boto3 and the
+Node SDK, three exercises, and an honest account of where the emulator and real
+AWS part company. **80 checks passing** across the five that are done.
 
 ## Why local emulation
 
@@ -57,6 +61,20 @@ otherwise would make these tutorials actively harmful. So **every tutorial ends
 with a "How this differs from real AWS" section**, populated from a
 [coverage matrix](docs/COVERAGE.md) that records what was tested by hand rather
 than what the vendor documentation claims.
+
+## What the testing actually found
+
+Writing those verification scripts turned up real differences that are not
+documented anywhere. Each one is now written into the relevant tutorial and
+asserted in its test, so a future Floci release that changes the behaviour will
+break the build rather than quietly make the tutorial wrong.
+
+| Service | What differs | Why it matters |
+|---|---|---|
+| S3 | Overwriting an object that predates versioning destroys its `null` version. Real AWS keeps it. | Silent data loss, with no error raised. |
+| DynamoDB | Secondary indexes update instantly. Real AWS indexes are eventually consistent. | Write-then-immediately-query works here and fails intermittently in production. |
+| SQS | Standard queues never reordered or duplicated a message. Real AWS permits both. | A consumer that is not idempotent passes here and fails in production. |
+| Lambda | The IAM execution role is not validated at all. | On real AWS a role missing log permissions gives you a function that runs but writes nothing. |
 
 ## How the tutorials are built
 
