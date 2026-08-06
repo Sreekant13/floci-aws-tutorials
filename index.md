@@ -37,13 +37,13 @@ If that listed your bucket, you are ready.
 | [03](tutorials/03-lambda/) | Serverless functions | Lambda | 15 | 60 min |
 | [04](tutorials/04-messaging/) | Queues and pub/sub | SQS, SNS | 21 | 60 min |
 | 05 | A full REST API | API Gateway + Lambda + DynamoDB | | _in progress_ |
-| 06 | Identity and secrets | IAM, STS, Secrets Manager | | _in progress_ |
+| [06](tutorials/06-iam/) | Identity and secrets | IAM, STS, Secrets Manager | 23 | 70 min |
 | 07 | Orchestration | Step Functions, EventBridge | | _in progress_ |
 | 08 | Infrastructure as code | CloudFormation | | _in progress_ |
 
 Every tutorial has command line steps, the same thing in both boto3 and the
 Node SDK, three exercises, and an honest account of where the emulator and real
-AWS part company. **80 checks passing** across the five that are done.
+AWS part company. **103 checks passing** across the six that are done.
 
 ## Why local emulation
 
@@ -75,6 +75,8 @@ break the build rather than quietly make the tutorial wrong.
 | DynamoDB | Secondary indexes update instantly. Real AWS indexes are eventually consistent. | Write-then-immediately-query works here and fails intermittently in production. |
 | SQS | Standard queues never reordered or duplicated a message. Real AWS permits both. | A consumer that is not idempotent passes here and fails in production. |
 | Lambda | The IAM execution role is not validated at all. | On real AWS a role missing log permissions gives you a function that runs but writes nothing. |
+| IAM | Policies are stored and correctly simulated, but **never enforced**. An explicit `Deny` is ignored, and invented credentials work. | The largest gap in the series. A security control that looks present and does nothing. |
+| KMS | `encrypt` does not encrypt. The plaintext is recoverable from the ciphertext with no key. | Anything you put through KMS locally is readable by anyone holding the output. |
 
 ## How the tutorials are built
 

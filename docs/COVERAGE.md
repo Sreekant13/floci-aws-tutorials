@@ -67,7 +67,7 @@ Legend: :white_check_mark: covered / :warning: partial, tutorial notes the gap /
 | Lambda | :warning: | `03-lambda` | Very high fidelity; IAM role unchecked and no cold starts - see below |
 | SQS + SNS | :white_check_mark: | `04-messaging` | Fan-out, DLQ redrive, raw delivery, filter policies and FIFO all confirmed |
 | API Gateway | :white_check_mark: | `05-serverless-api` | Both REST and HTTP APIs create cleanly |
-| IAM / STS / Secrets Manager | :warning: | `06-iam` | Policies stored but enforcement not verified - see below |
+| IAM / STS / Secrets Manager | :warning: | `06-iam` | Policies stored and correctly simulated, but **never enforced**. KMS does not encrypt. See below. |
 | Step Functions / EventBridge | :white_check_mark: | `07-orchestration` | Execution semantics still to be probed |
 | CloudFormation | :white_check_mark: | `08-iac` | Stack create and describe confirmed |
 
@@ -89,6 +89,12 @@ Every row here must be quoted in the relevant tutorial's section 9.
 | Lambda | No cold starts, concurrency limits, or per-millisecond billing | Noted in `03-lambda` |
 | SQS | **Standard queues never reordered or duplicated a message in testing.** Real AWS standard queues explicitly permit both: they are at-least-once with best-effort ordering. Consumers that are not idempotent will pass here and fail in production. | Documented in `04-messaging` section 9. This is an absence of chaos rather than a missing feature, which makes it harder to notice and more dangerous. |
 | SQS | `ApproximateNumberOfMessages` is exact, and `receive-message` returned every available message | Noted in `04-messaging`. On real AWS both are approximate because the queue is distributed, so polling loops must not treat an empty response as an empty queue. |
+| IAM | **Policies are never enforced.** Verified across seven cases: a role with no permissions, an explicit `Deny`, a deny-all user policy, an S3 bucket policy with an explicit `Deny`, a role that does not exist, a trust policy denying everyone, and randomly invented credentials. All seven were allowed. | The subject of `06-iam`, and asserted in its `verify.sh` so enforcement arriving later fails the build. This is the largest gap in the series. |
+| IAM | `simulate-principal-policy` **does** evaluate correctly, returning `allowed`, `explicitDeny` and `implicitDeny` per real AWS rules | `06-iam` teaches policy authoring against the simulator instead of by observation. This is what rescues the tutorial. |
+| IAM | `simulate-custom-policy` is not supported, so a policy must be attached to a real role before it can be evaluated | Noted in `06-iam`. On real AWS a draft policy can be tested directly. |
+| STS | The role session name is discarded and always becomes `floci-session` | Noted in `06-iam`. Real AWS puts it in the ARN, which is how CloudTrail attributes actions to a person. |
+| KMS | **`encrypt` does not encrypt.** The ciphertext blob is `kms:v2:<keyid>:<id>::<base64 of the plaintext>`. The plaintext is recoverable with no key. | Documented in `06-iam` section 6 and asserted in its `verify.sh`. A security control that appears to work and does nothing. |
+| Secrets Manager / SSM | Values are stored in the clear, including `SecureString`. Version staging and `AWSPREVIOUS` work correctly. | Noted in `06-iam`. The APIs are faithful, the confidentiality is absent. |
 | All | No authentication. Any credential string is accepted. | Noted in `00-setup` |
 | All | No cost, quotas, throttling, or rate limiting | Noted in `00-setup` |
 
@@ -96,10 +102,10 @@ Every row here must be quoted in the relevant tutorial's section 9.
 
 Not yet tested, and therefore not yet claimed anywhere in the tutorials:
 
-- IAM policy **enforcement** - roles and policies are accepted and stored, but
-  whether a denied action is actually blocked is unverified. This is the single
-  most important open question, because `06-iam` is worthless if it teaches
-  policy authoring that the emulator does not enforce.
+- ~~IAM policy **enforcement**~~ - settled 2026-08-06. IAM is **not enforced at
+  all**. Seven cases were tested and every one was allowed through. The policy
+  simulator, however, evaluates correctly, so `06-iam` teaches policy authoring
+  against the simulator rather than by observing real calls.
 - ~~DynamoDB global secondary indexes and conditional writes~~ - probed
   2026-07-31, all working. GSI creation via `update-table`, GSI queries,
   `begins_with` on sort keys, `ConditionalCheckFailedException`, and

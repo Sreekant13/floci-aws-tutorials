@@ -53,11 +53,11 @@ You need **Docker** (Floci is a container, and Lambda launches more containers),
 | [03](tutorials/03-lambda/) | Serverless functions | Lambda | 15 | 60 min |
 | [04](tutorials/04-messaging/) | Queues and pub/sub | SQS, SNS | 21 | 60 min |
 | 05 | A full REST API | API Gateway + Lambda + DynamoDB | | _planned_ |
-| 06 | Identity and secrets | IAM, STS, Secrets Manager | | _planned_ |
+| [06](tutorials/06-iam/) | Identity and secrets | IAM, STS, Secrets Manager | 23 | 70 min |
 | 07 | Orchestration | Step Functions, EventBridge | | _planned_ |
 | 08 | Infrastructure as code | CloudFormation | | _planned_ |
 
-**80 checks passing**, on Windows locally and on Ubuntu in CI.
+**103 checks passing**, on Windows locally and on Ubuntu in CI.
 
 ## Why local emulation
 
@@ -91,6 +91,8 @@ break the build rather than quietly make the tutorial wrong.
 | DynamoDB | Global secondary indexes are updated synchronously. Real AWS indexes are eventually consistent. | Write-then-immediately-query works locally and fails intermittently in production. |
 | SQS | Standard queues never reordered or duplicated a message in testing. Real AWS explicitly permits both. | A consumer that is not idempotent passes here and fails in production. An absence of chaos is harder to notice than a missing feature. |
 | Lambda | The IAM execution role is not validated. Any ARN is accepted. | On real AWS a role missing log permissions produces a function that runs but writes nothing. That whole failure mode is invisible here. |
+| IAM | Policies are stored faithfully and evaluated correctly by the simulator, but **never enforced on a real call**. An explicit `Deny` is ignored, as are credentials invented on the spot. | The largest gap in the series, verified across seven cases. A security control that appears present and does nothing is harder to spot than one that is missing. |
+| KMS | `encrypt` does not encrypt. The ciphertext is a label wrapped around base64 of the plaintext, recoverable with no key. | Anything put through KMS locally is readable by anyone holding the output. |
 
 The full list, including what remains unprobed, is in
 [`docs/COVERAGE.md`](docs/COVERAGE.md).
@@ -139,6 +141,7 @@ tutorials/
   02-dynamodb/               README.md, verify.sh, python/, node/
   03-lambda/                 README.md, verify.sh, function/, python/, node/
   04-messaging/              README.md, verify.sh, python/, node/
+  06-iam/                    README.md, verify.sh, python/, node/
 
 .github/workflows/verify.yml
 ```

@@ -147,11 +147,16 @@ floci snapshot save before-experiment
 
 ## How this differs from real AWS
 
-- **No authentication, at all.** Any credential string works, and IAM policies
-  are stored but largely not enforced. A call that real AWS would deny with
-  `AccessDenied` will very likely succeed here. Tutorial `06-iam` covers this
-  in detail - until then, do not assume anything you learn here about
-  permissions transfers.
+- **No authentication, and no authorisation.** Any credential string works,
+  including one you invent. IAM policies are stored faithfully and never
+  enforced: a call that real AWS would refuse with `AccessDenied` succeeds here
+  every time. This was verified across seven separate cases, and
+  [`06-iam`](../06-iam/) walks through them. Nothing you observe in this
+  environment tells you whether a permission would be granted on real AWS.
+- **KMS does not encrypt, and Secrets Manager stores values in the clear.**
+  Both behave correctly as APIs, so code written against them ports unchanged,
+  but neither provides any confidentiality. Never put a real secret into a
+  local Floci instance. Again, see [`06-iam`](../06-iam/).
 - **One account, one region, by default.** Cross-account and cross-region
   behaviour is not exercised by these tutorials.
 - **No cost, no quotas, no throttling.** Real AWS will rate-limit and bill you.
