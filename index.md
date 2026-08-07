@@ -36,14 +36,14 @@ If that listed your bucket, you are ready.
 | [02](tutorials/02-dynamodb/) | Key-value data | DynamoDB | 16 | 60 min |
 | [03](tutorials/03-lambda/) | Serverless functions | Lambda | 15 | 60 min |
 | [04](tutorials/04-messaging/) | Queues and pub/sub | SQS, SNS | 21 | 60 min |
-| 05 | A full REST API | API Gateway + Lambda + DynamoDB | | _in progress_ |
+| [05](tutorials/05-serverless-api/) | A full REST API | API Gateway + Lambda + DynamoDB | 23 | 75 min |
 | [06](tutorials/06-iam/) | Identity and secrets | IAM, STS, Secrets Manager | 23 | 70 min |
 | 07 | Orchestration | Step Functions, EventBridge | | _in progress_ |
 | 08 | Infrastructure as code | CloudFormation | | _in progress_ |
 
 Every tutorial has command line steps, the same thing in both boto3 and the
 Node SDK, three exercises, and an honest account of where the emulator and real
-AWS part company. **103 checks passing** across the six that are done.
+AWS part company. **126 checks passing** across the seven that are done.
 
 ## Why local emulation
 

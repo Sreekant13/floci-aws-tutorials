@@ -52,12 +52,12 @@ You need **Docker** (Floci is a container, and Lambda launches more containers),
 | [02](tutorials/02-dynamodb/) | Key-value data | DynamoDB | 16 | 60 min |
 | [03](tutorials/03-lambda/) | Serverless functions | Lambda | 15 | 60 min |
 | [04](tutorials/04-messaging/) | Queues and pub/sub | SQS, SNS | 21 | 60 min |
-| 05 | A full REST API | API Gateway + Lambda + DynamoDB | | _planned_ |
+| [05](tutorials/05-serverless-api/) | A full REST API | API Gateway + Lambda + DynamoDB | 23 | 75 min |
 | [06](tutorials/06-iam/) | Identity and secrets | IAM, STS, Secrets Manager | 23 | 70 min |
 | 07 | Orchestration | Step Functions, EventBridge | | _planned_ |
 | 08 | Infrastructure as code | CloudFormation | | _planned_ |
 
-**103 checks passing**, on Windows locally and on Ubuntu in CI.
+**126 checks passing**, on Windows locally and on Ubuntu in CI.
 
 ## Why local emulation
 
@@ -141,6 +141,7 @@ tutorials/
   02-dynamodb/               README.md, verify.sh, python/, node/
   03-lambda/                 README.md, verify.sh, function/, python/, node/
   04-messaging/              README.md, verify.sh, python/, node/
+  05-serverless-api/         README.md, verify.sh, function/, python/, node/
   06-iam/                    README.md, verify.sh, python/, node/
 
 .github/workflows/verify.yml

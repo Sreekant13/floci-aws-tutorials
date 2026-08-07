@@ -27,12 +27,21 @@ floci start && ./scripts/smoke-test.sh
 | Host OS | Windows 11 |
 | Docker | 29.6.2 (Linux containers) |
 | AWS CLI | 2.35.12 |
-| Date tested | 2026-07-31 |
+| Date first tested | 2026-07-31 |
+| Date last tested | 2026-08-06 |
 
 ## Probe results
 
 **38 of 38 probes passed.** Every service below was exercised with the
 operations its tutorial actually needs, not merely pinged.
+
+The table below is the output of `scripts/smoke-test.sh`, which is deliberately
+shallow: it establishes that a service responds correctly to the handful of
+calls a tutorial opens with. The divergences further down came from deeper
+hand probing while each tutorial was written, and from the `verify.sh` scripts
+disagreeing with a draft. Several of the most important findings, including the
+S3 versioning data loss and the absence of IAM enforcement, do not appear here
+at all, because a shallow probe cannot see them.
 
 | Service | Operations probed | Result |
 |---|---|---|
@@ -66,7 +75,7 @@ Legend: :white_check_mark: covered / :warning: partial, tutorial notes the gap /
 | DynamoDB | :warning: | `02-dynamodb` | Fully functional; GSI consistency differs - see below |
 | Lambda | :warning: | `03-lambda` | Very high fidelity; IAM role unchecked and no cold starts - see below |
 | SQS + SNS | :white_check_mark: | `04-messaging` | Fan-out, DLQ redrive, raw delivery, filter policies and FIFO all confirmed |
-| API Gateway | :white_check_mark: | `05-serverless-api` | Both REST and HTTP APIs create cleanly |
+| API Gateway | :warning: | `05-serverless-api` | Routing, path params, query strings and bodies all work. Invoke URL differs, and no invoke permission is required. See below. |
 | IAM / STS / Secrets Manager | :warning: | `06-iam` | Policies stored and correctly simulated, but **never enforced**. KMS does not encrypt. See below. |
 | Step Functions / EventBridge | :white_check_mark: | `07-orchestration` | Execution semantics still to be probed |
 | CloudFormation | :white_check_mark: | `08-iac` | Stack create and describe confirmed |
@@ -95,6 +104,9 @@ Every row here must be quoted in the relevant tutorial's section 9.
 | STS | The role session name is discarded and always becomes `floci-session` | Noted in `06-iam`. Real AWS puts it in the ARN, which is how CloudTrail attributes actions to a person. |
 | KMS | **`encrypt` does not encrypt.** The ciphertext blob is `kms:v2:<keyid>:<id>::<base64 of the plaintext>`. The plaintext is recoverable with no key. | Documented in `06-iam` section 6 and asserted in its `verify.sh`. A security control that appears to work and does nothing. |
 | Secrets Manager / SSM | Values are stored in the clear, including `SecureString`. Version staging and `AWSPREVIOUS` work correctly. | Noted in `06-iam`. The APIs are faithful, the confidentiality is absent. |
+| API Gateway | **`get-api` reports an unreachable endpoint.** It returns `https://{id}.execute-api.{region}.amazonaws.com`, which is correct for real AWS but does not resolve locally. The working path is `http://localhost:4566/restapis/{id}/{stage}/_user_request_/`. | Documented in `05-serverless-api` and asserted in its `verify.sh`. Any code that reads `ApiEndpoint` and calls it fails here. |
+| API Gateway | **No `lambda:InvokeFunction` permission is needed.** On real AWS the stack returns 500 until you run `aws lambda add-permission --principal apigateway.amazonaws.com`. | Noted in `05-serverless-api`. A very common first-time failure that cannot be experienced here, because IAM is not enforced. |
+| Lambda | The runtime injects `AWS_ENDPOINT_URL=http://localhost.floci.io:4566` into the function environment, so in-function SDK clients need no endpoint configuration | Noted in `05-serverless-api`. This is a convenience, and it means handler code is byte-identical to real AWS. |
 | All | No authentication. Any credential string is accepted. | Noted in `00-setup` |
 | All | No cost, quotas, throttling, or rate limiting | Noted in `00-setup` |
 
@@ -114,7 +126,10 @@ Not yet tested, and therefore not yet claimed anywhere in the tutorials:
   working, along with the SNS envelope, `RawMessageDelivery`, filter policies,
   dead letter queue redrive via `maxReceiveCount`, visibility timeout
   redelivery, long polling, and FIFO ordering within a message group.
-- Lambda triggered by an API Gateway route
+- ~~Lambda triggered by an API Gateway route~~ - probed 2026-08-06 and fully
+  working. AWS_PROXY integration with payload format 2.0 delivers the correct
+  event shape, including `routeKey`, `pathParameters`, `queryStringParameters`
+  and the raw body. Unmatched routes return 404 from the gateway itself.
 - Step Functions actual execution, not just state machine creation
 - CloudFormation stack updates, deletes, and rollback
 
