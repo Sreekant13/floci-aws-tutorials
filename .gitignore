@@ -31,3 +31,7 @@ scripts/out/
 .env.*
 !.env.example
 credentials
+
+# Private working notes. The full build log, including every bug and how it was
+# fixed. For us, not for students.
+PLAYBOOK.md
