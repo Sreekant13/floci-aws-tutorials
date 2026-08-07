@@ -5,6 +5,10 @@ source "$(cd "$(dirname "$0")" && pwd)/../../scripts/lib.sh"
 FN="verify-lambda-$$"
 WORK="$(mktemp -d)"
 cleanup() {
+  # set -e is inherited by the EXIT trap. Without this, a single failing
+  # teardown call aborts the trap and the script exits with that error,
+  # reporting a failure even when every check passed.
+  set +e
   aws lambda delete-function --function-name "$FN" >/dev/null 2>&1 || true
   rm -rf "$WORK"
 }

@@ -10,6 +10,10 @@ API_ID=""
 WORK="$(mktemp -d)"
 
 cleanup() {
+  # set -e is inherited by the EXIT trap. Without this, a single failing
+  # teardown call aborts the trap and the script exits with that error,
+  # reporting a failure even when every check passed.
+  set +e
   [ -n "$API_ID" ] && aws apigatewayv2 delete-api --api-id "$API_ID" >/dev/null 2>&1
   aws lambda delete-function --function-name "$FN" >/dev/null 2>&1
   aws dynamodb delete-table --table-name "$TABLE" >/dev/null 2>&1

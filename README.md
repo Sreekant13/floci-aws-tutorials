@@ -54,10 +54,10 @@ You need **Docker** (Floci is a container, and Lambda launches more containers),
 | [04](tutorials/04-messaging/) | Queues and pub/sub | SQS, SNS | 21 | 60 min |
 | [05](tutorials/05-serverless-api/) | A full REST API | API Gateway + Lambda + DynamoDB | 23 | 75 min |
 | [06](tutorials/06-iam/) | Identity and secrets | IAM, STS, Secrets Manager | 23 | 70 min |
-| 07 | Orchestration | Step Functions, EventBridge | | _planned_ |
+| [07](tutorials/07-orchestration/) | Orchestration | Step Functions, EventBridge | 24 | 70 min |
 | 08 | Infrastructure as code | CloudFormation | | _planned_ |
 
-**126 checks passing**, on Windows locally and on Ubuntu in CI.
+**150 checks passing**, on Windows locally and on Ubuntu in CI.
 
 ## Why local emulation
 
@@ -93,6 +93,7 @@ break the build rather than quietly make the tutorial wrong.
 | Lambda | The IAM execution role is not validated. Any ARN is accepted. | On real AWS a role missing log permissions produces a function that runs but writes nothing. That whole failure mode is invisible here. |
 | IAM | Policies are stored faithfully and evaluated correctly by the simulator, but **never enforced on a real call**. An explicit `Deny` is ignored, as are credentials invented on the spot. | The largest gap in the series, verified across seven cases. A security control that appears present and does nothing is harder to spot than one that is missing. |
 | KMS | `encrypt` does not encrypt. The ciphertext is a label wrapped around base64 of the plaintext, recoverable with no key. | Anything put through KMS locally is readable by anyone holding the output. |
+| Step Functions | `Retry` is accepted and never executed. A Task set to retry three times runs exactly once. | Retry logic that looks correct locally behaves completely differently in production, including timing and the idempotency each step then needs. |
 
 The full list, including what remains unprobed, is in
 [`docs/COVERAGE.md`](docs/COVERAGE.md).
@@ -143,6 +144,7 @@ tutorials/
   04-messaging/              README.md, verify.sh, python/, node/
   05-serverless-api/         README.md, verify.sh, function/, python/, node/
   06-iam/                    README.md, verify.sh, python/, node/
+  07-orchestration/          README.md, verify.sh, function/, python/, node/
 
 .github/workflows/verify.yml
 ```

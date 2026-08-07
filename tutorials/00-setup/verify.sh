@@ -5,6 +5,10 @@ source "$(cd "$(dirname "$0")" && pwd)/../../scripts/lib.sh"
 BUCKET="verify-setup-$$"
 TMP="$(mktemp -d)"
 cleanup() {
+  # set -e is inherited by the EXIT trap. Without this, a single failing
+  # teardown call aborts the trap and the script exits with that error,
+  # reporting a failure even when every check passed.
+  set +e
   aws s3 rb "s3://$BUCKET" --force >/dev/null 2>&1 || true
   rm -rf "$TMP"
 }

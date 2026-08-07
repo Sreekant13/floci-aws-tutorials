@@ -77,7 +77,7 @@ Legend: :white_check_mark: covered / :warning: partial, tutorial notes the gap /
 | SQS + SNS | :white_check_mark: | `04-messaging` | Fan-out, DLQ redrive, raw delivery, filter policies and FIFO all confirmed |
 | API Gateway | :warning: | `05-serverless-api` | Routing, path params, query strings and bodies all work. Invoke URL differs, and no invoke permission is required. See below. |
 | IAM / STS / Secrets Manager | :warning: | `06-iam` | Policies stored and correctly simulated, but **never enforced**. KMS does not encrypt. See below. |
-| Step Functions / EventBridge | :white_check_mark: | `07-orchestration` | Execution semantics still to be probed |
+| Step Functions / EventBridge | :warning: | `07-orchestration` | Execution is genuine. `Retry` is accepted and never run, and EventBridge cannot start a state machine. See below. |
 | CloudFormation | :white_check_mark: | `08-iac` | Stack create and describe confirmed |
 
 ## Known divergences from real AWS
@@ -107,6 +107,11 @@ Every row here must be quoted in the relevant tutorial's section 9.
 | API Gateway | **`get-api` reports an unreachable endpoint.** It returns `https://{id}.execute-api.{region}.amazonaws.com`, which is correct for real AWS but does not resolve locally. The working path is `http://localhost:4566/restapis/{id}/{stage}/_user_request_/`. | Documented in `05-serverless-api` and asserted in its `verify.sh`. Any code that reads `ApiEndpoint` and calls it fails here. |
 | API Gateway | **No `lambda:InvokeFunction` permission is needed.** On real AWS the stack returns 500 until you run `aws lambda add-permission --principal apigateway.amazonaws.com`. | Noted in `05-serverless-api`. A very common first-time failure that cannot be experienced here, because IAM is not enforced. |
 | Lambda | The runtime injects `AWS_ENDPOINT_URL=http://localhost.floci.io:4566` into the function environment, so in-function SDK clients need no endpoint configuration | Noted in `05-serverless-api`. This is a convenience, and it means handler code is byte-identical to real AWS. |
+| Step Functions | **`Retry` is accepted and never executed.** A Task with `MaxAttempts: 3` runs once and goes straight to `Catch`. Measured by counting actual Lambda invocations, not inferred. | Documented in `07-orchestration` section 5 and asserted in its `verify.sh`. Retry logic that looks correct here behaves completely differently in production. |
+| Step Functions | Execution history is much coarser. Real AWS records `LambdaFunctionScheduled`, `LambdaFunctionStarted` and `LambdaFunctionFailed` around each Task; Floci records only state entered and exited. | Noted in `07-orchestration`. A failure inside a Task leaves no trace in the history. |
+| Step Functions | Only the Lambda Task type was verified. Real Step Functions can call DynamoDB, SQS and many services directly. | Noted in `07-orchestration` |
+| EventBridge | **A Step Functions target is accepted but never fires.** `put-targets` returns `FailedEntryCount: 0` and no execution ever starts. SQS and Lambda targets both work. | Documented in `07-orchestration` and asserted in its `verify.sh`. Route through a Lambda that calls `start-execution` instead. |
+| EventBridge | Scheduled rules using `rate()` or `cron()` were not tested | Noted in `07-orchestration` as untested rather than working |
 | All | No authentication. Any credential string is accepted. | Noted in `00-setup` |
 | All | No cost, quotas, throttling, or rate limiting | Noted in `00-setup` |
 
@@ -130,7 +135,10 @@ Not yet tested, and therefore not yet claimed anywhere in the tutorials:
   working. AWS_PROXY integration with payload format 2.0 delivers the correct
   event shape, including `routeKey`, `pathParameters`, `queryStringParameters`
   and the raw body. Unmatched routes return 404 from the gateway itself.
-- Step Functions actual execution, not just state machine creation
+- ~~Step Functions actual execution~~ - probed 2026-08-06 and genuine.
+  `Choice`, `Task`, `Wait`, `Map`, `Parallel`, `Succeed`, `Fail` and `Catch`
+  all behave correctly, `Wait` really waits, and full execution history is
+  available. `Retry` is the exception, see below.
 - CloudFormation stack updates, deletes, and rollback
 
 ## Windows toolchain traps

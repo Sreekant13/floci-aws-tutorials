@@ -14,6 +14,10 @@ TOPIC_ARN=""
 declare -a QUEUE_URLS=()
 
 cleanup() {
+  # set -e is inherited by the EXIT trap. Without this, a single failing
+  # teardown call aborts the trap and the script exits with that error,
+  # reporting a failure even when every check passed.
+  set +e
   for q in "${QUEUE_URLS[@]}"; do
     [ -n "$q" ] && aws sqs delete-queue --queue-url "$q" >/dev/null 2>&1
   done

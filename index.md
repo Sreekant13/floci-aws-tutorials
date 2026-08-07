@@ -38,12 +38,12 @@ If that listed your bucket, you are ready.
 | [04](tutorials/04-messaging/) | Queues and pub/sub | SQS, SNS | 21 | 60 min |
 | [05](tutorials/05-serverless-api/) | A full REST API | API Gateway + Lambda + DynamoDB | 23 | 75 min |
 | [06](tutorials/06-iam/) | Identity and secrets | IAM, STS, Secrets Manager | 23 | 70 min |
-| 07 | Orchestration | Step Functions, EventBridge | | _in progress_ |
+| [07](tutorials/07-orchestration/) | Orchestration | Step Functions, EventBridge | 24 | 70 min |
 | 08 | Infrastructure as code | CloudFormation | | _in progress_ |
 
 Every tutorial has command line steps, the same thing in both boto3 and the
 Node SDK, three exercises, and an honest account of where the emulator and real
-AWS part company. **126 checks passing** across the seven that are done.
+AWS part company. **150 checks passing** across the eight that are done.
 
 ## Why local emulation
 
