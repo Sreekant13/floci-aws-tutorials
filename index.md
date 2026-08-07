@@ -87,8 +87,41 @@ quietly break a tutorial without anyone noticing.
 
 Source: [github.com/Sreekant13/floci-aws-tutorials](https://github.com/Sreekant13/floci-aws-tutorials)
 
+Licensed [MIT](https://github.com/Sreekant13/floci-aws-tutorials/blob/main/LICENSE).
+Use them, fork them, teach from them.
+
+## Before you go
+
+You are about to spend a few hours breaking a cloud that cannot bill you. That
+is a genuinely rare position to be in, so please misuse it. Delete the thing you
+were told not to delete. Feed the function garbage. Run a `verify.sh` and try to
+make it fail. The worst outcome is that you type `floci stop` and everything you
+did evaporates for free.
+
+Nothing here has a credit card attached, so there is no such thing as an
+expensive mistake. Go and make some cheap ones.
+
+If any of this was useful, a
+[star](https://github.com/Sreekant13/floci-aws-tutorials) takes one click and
+helps the next student find it. If you know somebody who has been putting off
+learning AWS because of the credit card form, send them this way.
+
+Good luck, and enjoy the low floor.
+
+## Say hello
+
+Built by **Sreekant Baheti**.
+
+- Portfolio: **[sreekantbaheti.com](https://sreekantbaheti.com/)**
+- GitHub: [@Sreekant13](https://github.com/Sreekant13)
+
+Found a typo, a broken command, or a place where Floci does something none of
+these pages warn you about?
+[Open an issue](https://github.com/Sreekant13/floci-aws-tutorials/issues).
+Turning up a new divergence is the single most valuable thing you can contribute
+here, and I will credit you for it on the page you break.
+
 ---
 
-Built by Sreekant Baheti as a research assistant project under
-Dr. Saty Raghavachary, Computer Science Department, University of Southern
-California.
+Built as a research assistant project under Dr. Saty Raghavachary, Computer
+Science Department, University of Southern California.
